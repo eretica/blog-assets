@@ -1,0 +1,11 @@
+{
+  "name": "ai-slides-html",
+  "private": true,
+  "description": "StackBlitz の埋め込みプレビュー用（静的ファイルを配信するだけ）",
+  "scripts": {
+    "start": "serve -l 3000 ."
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
+  }
+}
