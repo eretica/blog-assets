@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エンジニアとは</title>
+<meta name="description" content="エンジニアの本質的な仕事は「問題を解決すること」。コードを書くのは、その手段の一つにすぎない。">
+<style>
+:root {
+  --paper: #fbfaf7;
+  --card: #ffffff;
+  --ink: #15202b;
+  --sub: #55626f;
+  --line: #e2dfd6;
+  --accent: #129fd8;
+  --accent-deep: #0a6491;
+  --tint: #e4f4fc;
+  --marker: #bfe6f7;
+  --ng: #c9463c;
+  --ng-tint: #fcecea;
+  --dark: #0f2230;
+  --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", Meiryo, sans-serif;
+  --bar: 3rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: clamp(16px, 0.9vw + 0.75vh, 28px);
+  scroll-padding-top: 0;
+  -webkit-text-size-adjust: 100%;
+}
+html, body { height: 100%; overflow: hidden; }
+
+/* 横に並べたスライドを 1 枚ずつスナップさせる */
+main {
+  display: flex; height: 100vh; height: 100svh;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+main::-webkit-scrollbar { display: none; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  line-break: strict;
+  word-break: auto-phrase;
+  overflow-wrap: anywhere;
+  font-feature-settings: "palt";
+}
+
+h1, h2, h3, p, ul, ol, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+img, svg { max-width: 100%; display: block; }
+a { color: inherit; }
+
+/* ---------- 上部バー ---------- */
+.bar {
+  position: fixed; inset: 0 0 auto 0; height: var(--bar); z-index: 20;
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.78rem; font-weight: 600; color: var(--sub);
+}
+.bar .home { text-decoration: none; color: var(--ink); font-weight: 700; white-space: nowrap; }
+.bar .where { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent-deep); }
+.bar .count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar .dots { letter-spacing: 0.15em; font-size: 0.6rem; color: var(--accent); white-space: nowrap; }
+.bar button {
+  font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 0.25rem 0.9rem; cursor: pointer; white-space: nowrap;
+}
+.bar button:hover { border-color: var(--accent); }
+.progress { position: absolute; left: 0; bottom: -1px; height: 3px; width: 0; background: var(--accent); }
+
+/* ---------- 前後ボタン ---------- */
+.pager { position: fixed; right: clamp(0.75rem, 2vw, 1.5rem); bottom: clamp(0.75rem, 2vw, 1.5rem); z-index: 20; display: flex; gap: 0.4rem; }
+.pager button {
+  width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); font-size: 1.1rem; cursor: pointer;
+  box-shadow: 0 2px 10px rgb(21 32 43 / 0.08);
+}
+@media (max-width: 700px) { .pager { display: none; } } /* スマホはスワイプで進む（本文に被るため） */
+.pager button:hover { border-color: var(--accent); color: var(--accent-deep); }
+
+/* ---------- 目次 ---------- */
+.toc {
+  position: fixed; inset: 0; z-index: 30; background: rgb(15 34 48 / 0.45);
+  display: none; justify-content: flex-end;
+}
+.toc.open { display: flex; }
+.toc nav {
+  width: min(26rem, 100%); height: 100%; overflow-y: auto; background: var(--paper);
+  padding: 1.25rem 1.5rem 3rem; font-size: 0.85rem;
+}
+.toc .toc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-weight: 700; }
+.toc .toc-head button { font: inherit; border: 0; background: none; cursor: pointer; font-size: 1.2rem; color: var(--sub); }
+.toc a { display: block; text-decoration: none; padding: 0.28rem 0.6rem; border-radius: 0.4rem; }
+.toc a:hover, .toc a.now { background: var(--tint); }
+.toc a.ch { margin-top: 0.8rem; font-weight: 700; color: var(--accent-deep); }
+.toc a.tp { padding-left: 1.6rem; }
+
+/* ---------- スライド（1画面 = 1メッセージ） ---------- */
+.s {
+  position: relative; flex: 0 0 100%; height: 100%;
+  overflow-x: hidden; overflow-y: auto; /* 収まらないスライドだけ、その中で縦スクロール */
+  display: flex;
+  padding: calc(var(--bar) + 1.8rem) clamp(1.25rem, 6vw, 7rem) 3.8rem;
+  scroll-snap-align: start; scroll-snap-stop: always;
+}
+.hero, .chapter { overflow: hidden; }
+.inner { width: min(100%, 58rem); margin: auto; }
+.inner.wide { width: min(100%, 66rem); }
+.inner > * + * { margin-top: 1.5rem; }
+
+.kicker {
+  display: flex; align-items: center; gap: 0.7em;
+  font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em; color: var(--accent-deep);
+}
+.kicker b {
+  font-variant-numeric: tabular-nums; color: #fff; background: var(--accent-deep);
+  border-radius: 0.3rem; padding: 0 0.5em; letter-spacing: 0.05em;
+}
+.inner > .kicker + h2 { margin-top: 0.6rem; }
+
+h2 {
+  font-size: clamp(1.7rem, 6vw, 2.7rem); line-height: 1.3; font-weight: 800; letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+h2 small { display: block; font-size: 0.5em; font-weight: 600; color: var(--sub); margin-top: 0.4em; }
+h3 { font-size: 0.92rem; font-weight: 700; letter-spacing: 0.1em; color: var(--accent-deep); }
+
+/* 結論（各スライドで一番持ち帰ってほしい一文） */
+.point {
+  font-size: clamp(1.15rem, 3.6vw, 1.55rem); line-height: 1.6; font-weight: 700;
+  padding: 0.1em 0 0.1em 1.1rem; border-left: 0.4rem solid var(--accent);
+  text-wrap: pretty;
+}
+mark { background: linear-gradient(transparent 58%, var(--marker) 58%); color: inherit; padding: 0 0.05em; }
+strong { font-weight: 800; }
+.sub { color: var(--sub); }
+.note { font-size: 0.8rem; color: var(--sub); }
+
+/* 箇条書き */
+.pts { display: grid; gap: 0.6rem; font-size: 1.12rem; }
+.group .pts, .dream .pts { font-size: 1.02rem; }
+@media (min-width: 900px) { .pts.two { grid-template-columns: 1fr 1fr; column-gap: 2.2rem; } }
+.pts > li { position: relative; padding-left: 1.5rem; line-height: 1.65; }
+.pts > li::before {
+  content: ""; position: absolute; left: 0.15rem; top: 0.72em;
+  width: 0.7rem; height: 0.18rem; border-radius: 1px; background: var(--accent);
+}
+.pts .pts { margin-top: 0.45rem; gap: 0.35rem; font-size: 0.92em; color: var(--sub); }
+.group > p { font-size: 1.05rem; }
+.pts .pts > li::before { width: 0.35rem; height: 0.35rem; border-radius: 50%; top: 0.65em; background: #a9b6c1; }
+
+/* 2カラム / グループ */
+.cols { display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+.group {
+  background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem;
+  padding: 1.2rem 1.4rem 1.35rem;
+}
+.group > * + * { margin-top: 0.8rem; }
+.group.tint { background: var(--tint); border-color: transparent; }
+.group.warn { background: var(--ng-tint); border-color: transparent; }
+.group.warn h3 { color: var(--ng); }
+.group.warn .pts > li::before { background: var(--ng); }
+
+/* 番号つきカード */
+.cards { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); counter-reset: c; }
+.cards > li {
+  counter-increment: c; background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem;
+  padding: 1rem 1.2rem 1.15rem; font-weight: 600; line-height: 1.6;
+}
+.cards > li::before {
+  content: counter(c, decimal-leading-zero); display: block; font-size: 0.75rem; font-weight: 800;
+  letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.3rem;
+}
+.cards.c2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+.cards > li { font-size: 1.08rem; }
+@media (min-width: 720px) { .cards.c2 > li.hl:last-child:nth-child(odd) { grid-column: 1 / -1; font-size: 1.4rem; } }
+.cards > li.hl { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+.cards > li.hl::before { color: #bfe6f7; }
+
+/* ✕ → ◯ の対比 */
+.vs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.9rem; align-items: stretch; }
+.vs > div { border-radius: 0.9rem; padding: 1.1rem 1.3rem 1.2rem; font-weight: 700; font-size: 1.12rem; line-height: 1.55; }
+.vs .tag { display: block; font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 0.35rem; }
+.vs .ng { background: var(--ng-tint); color: #7d2a23; }
+.vs .ng .tag { color: var(--ng); }
+.vs .ok { background: var(--tint); color: #073f5c; outline: 2px solid var(--accent); }
+.vs .ok .tag { color: var(--accent-deep); }
+.vs .to { align-self: center; padding: 0; font-size: 1.5rem; color: var(--sub); }
+@media (max-width: 640px) {
+  .vs { grid-template-columns: 1fr; }
+  .vs .to { justify-self: center; transform: rotate(90deg); }
+}
+
+/* 連鎖（A → B → C） */
+.flow { display: flex; flex-wrap: wrap; gap: 0.5rem 0; align-items: stretch; }
+.flow > li {
+  display: flex; align-items: center; background: var(--card); border: 1px solid var(--line);
+  border-radius: 0.6rem; padding: 0.55rem 0.9rem; font-weight: 600; font-size: 1.05rem; line-height: 1.5;
+}
+.flow > li + li { margin-left: 1.9rem; position: relative; }
+.flow > li + li::before { content: "→"; position: absolute; left: -1.45rem; color: var(--sub); font-weight: 700; }
+.flow > li.end { background: var(--ng-tint); border-color: transparent; color: #7d2a23; }
+.flow.good > li.end { background: var(--tint); color: #073f5c; }
+
+/* 引用・せりふ */
+.quote {
+  font-size: clamp(1.5rem, 3.4vw, 3rem); font-weight: 800; line-height: 1.4; text-wrap: balance;
+}
+.talk { display: grid; gap: 0.9rem; }
+.talk > div { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.9rem; align-items: center; }
+.talk .who {
+  width: 4.2rem; height: 4.2rem; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; font-size: 0.9rem; background: var(--line); color: var(--ink);
+}
+.talk .say {
+  position: relative; justify-self: start; background: var(--card); border: 1px solid var(--line);
+  border-radius: 1rem; padding: 0.7rem 1.1rem; font-weight: 600; line-height: 1.6;
+}
+.talk .t .who { background: var(--accent-deep); color: #fff; }
+.talk .t .say { background: var(--tint); border-color: transparent; font-size: 1.15rem; font-weight: 800; }
+.bubbles { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.bubbles span {
+  background: var(--card); border: 1px solid var(--line); border-radius: 1rem 1rem 1rem 0.2rem;
+  padding: 0.5rem 1rem; font-weight: 700;
+}
+
+/* 図版 */
+figure img { border-radius: 0.8rem; border: 1px solid var(--line); width: 100%; }
+/* 風刺画「顧客が本当に必要だったもの」（SVG で描き直したもの） */
+.swing { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.45rem; counter-reset: sw; }
+.swing li { counter-increment: sw; background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.3rem 0.3rem 0.4rem; }
+.swing svg { width: 100%; height: auto; border-radius: 0.3rem; }
+.swing span { display: block; margin-top: 0.25rem; font-size: 0.68rem; font-weight: 700; line-height: 1.35; text-align: center; }
+.swing span::before { content: counter(sw) ". "; color: var(--accent-deep); }
+.swing li.key { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+@media (max-width: 560px) { .swing span { font-size: 0.58rem; } }
+figcaption { margin-top: 0.6rem; font-size: 0.8rem; color: var(--sub); }
+.era { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem 1.2rem; margin-top: 0.7rem; font-size: 0.92rem; }
+.era b { display: block; font-size: 1.05rem; }
+.era span { color: var(--sub); }
+
+/* ---------- タイトル ---------- */
+.hero { background: #fff; }
+.hero::before {
+  content: ""; position: absolute; right: 9vw; top: calc(-1 * min(15vw, 12rem));
+  width: min(28vw, 22rem); aspect-ratio: 1; border-radius: 50%; background: var(--accent);
+}
+.hero::after, .chapter::after {
+  content: ""; position: absolute; right: calc(-1 * min(15vw, 12rem)); bottom: calc(-1 * min(15vw, 12rem));
+  width: min(36vw, 28rem); aspect-ratio: 1; border-radius: 50%;
+  border: 0.55rem dashed var(--accent); opacity: 0.9; pointer-events: none;
+}
+.hero .inner { position: relative; z-index: 1; }
+h1 { font-size: clamp(3.2rem, 11vw, 9.5rem); line-height: 1.1; font-weight: 800; letter-spacing: 0; }
+.hero .lede { font-size: clamp(1.05rem, 1.9vw, 1.7rem); font-weight: 700; margin-top: 1.8rem; max-width: 30em; }
+.hero .how { margin-top: 2.6rem; font-size: 0.8rem; color: var(--sub); }
+kbd {
+  font: inherit; font-size: 0.9em; background: var(--paper); border: 1px solid var(--line);
+  border-bottom-width: 2px; border-radius: 0.3rem; padding: 0 0.4em;
+}
+
+/* 全体の流れ */
+.map { display: grid; gap: 0.7rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+.map a {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.8rem; align-items: baseline; text-decoration: none;
+  background: var(--card); border: 1px solid var(--line); border-radius: 0.8rem; padding: 0.7rem 1rem 0.8rem;
+}
+.map a:hover { border-color: var(--accent); }
+.map b { font-size: 0.8rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.map strong { font-weight: 700; line-height: 1.45; }
+.map span { grid-column: 2; font-size: 0.74rem; color: var(--sub); line-height: 1.5; }
+
+/* ---------- 章扉 ---------- */
+.chapter { background: var(--dark); color: #fff; }
+.chapter::after { opacity: 0.55; }
+.chapter .inner { position: relative; z-index: 1; }
+.chapter .no {
+  font-size: clamp(4rem, 12vw, 9rem); font-weight: 800; line-height: 1; color: var(--accent);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.chapter h2 { font-size: clamp(2rem, 5vw, 4rem); margin-top: 0.8rem; }
+.chapter ol { margin-top: 2rem; display: grid; gap: 0.45rem; color: #c9d6df; font-weight: 600; }
+.chapter ol li { padding-left: 1.4rem; position: relative; }
+.chapter ol li::before { content: ""; position: absolute; left: 0; top: 0.8em; width: 0.8rem; height: 2px; background: var(--accent); }
+
+/* ---------- 個別 ---------- */
+.belief {
+  display: inline-block; position: relative; font-size: clamp(1.5rem, 4.2vw, 3.6rem); font-weight: 800; line-height: 1.45;
+  text-wrap: balance;
+}
+.belief.small { font-size: clamp(1.05rem, 2vw, 1.6rem); color: var(--sub); }
+.belief.struck s { text-decoration: none; background: linear-gradient(var(--ng), var(--ng)) no-repeat 0 55% / 100% 0.12em; }
+.js .belief.struck s { background-size: 0 0.12em; transition: background-size 0.6s 0.4s ease-out; }
+.js .in .belief.struck s { background-size: 100% 0.12em; }
+.essence { font-size: clamp(1.9rem, 5.2vw, 4.4rem); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+.essence em { font-style: normal; color: var(--accent-deep); }
+.after { font-size: clamp(1.05rem, 1.9vw, 1.6rem); font-weight: 700; color: var(--sub); }
+
+.formula { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; font-weight: 800; font-size: clamp(1.1rem, 2.1vw, 1.7rem); }
+.formula span { background: var(--card); border: 1px solid var(--line); border-radius: 0.7rem; padding: 0.5rem 1.1rem; }
+.formula .res { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+.formula i { font-style: normal; color: var(--sub); }
+
+.steps { display: flex; align-items: flex-end; gap: 0.5rem; height: 9.5rem; }
+.steps div {
+  flex: 1; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.6rem;
+  border-radius: 0.6rem 0.6rem 0 0; background: var(--tint); font-weight: 800; color: #073f5c;
+}
+.steps div:nth-child(1) { height: 40%; }
+.steps div:nth-child(2) { height: 70%; background: var(--marker); }
+.steps div:nth-child(3) { height: 100%; background: var(--accent-deep); color: #fff; }
+
+.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 0.6rem; }
+.three li { background: var(--tint); border-radius: 0.7rem; padding: 0.7rem 1rem; font-weight: 800; text-align: center; color: #073f5c; }
+
+.tbl { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 0.9rem; overflow: hidden; background: var(--card); }
+.tbl li { display: grid; grid-template-columns: minmax(8.5rem, 0.9fr) 2fr; gap: 1rem; padding: 0.6rem 1.2rem; line-height: 1.55; }
+.tbl li + li { border-top: 1px solid var(--line); }
+.tbl b { font-weight: 800; }
+.tbl span { color: var(--sub); }
+@media (max-width: 560px) { .tbl li { grid-template-columns: 1fr; gap: 0; } }
+
+.dream { display: grid; grid-template-columns: 1fr auto 1.25fr; gap: 1rem; align-items: center; }
+.dream .want { background: var(--tint); border-radius: 0.9rem; padding: 1.1rem 1.3rem; font-weight: 800; font-size: 1.12rem; line-height: 1.55; color: #073f5c; }
+.dream .real { background: var(--ng-tint); border-radius: 0.9rem; padding: 1.1rem 1.3rem; }
+.dream .tag { display: block; font-size: 0.75rem; letter-spacing: 0.1em; font-weight: 800; margin-bottom: 0.4rem; }
+.dream .want .tag { color: var(--accent-deep); }
+.dream .real .tag { color: var(--ng); }
+.dream .real .pts > li::before { background: var(--ng); }
+.dream .but { font-weight: 700; color: var(--sub); font-size: 0.9rem; text-align: center; }
+@media (max-width: 720px) { .dream { grid-template-columns: 1fr; } }
+
+.split { display: grid; grid-template-columns: 1fr 1.15fr; gap: 2rem; align-items: center; }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+.split > div > * + * { margin-top: 1.2rem; }
+@media (min-width: 861px) { .split.fig-l { grid-template-columns: 1.3fr 1fr; } .split.fig-r { grid-template-columns: 1fr 1.3fr; } }
+.prose { display: grid; gap: 1rem; font-size: 1.15rem; font-weight: 600; }
+.prose .dim { color: var(--sub); }
+
+.chart { background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 1rem 1rem 0.6rem; }
+.chart svg { width: 100%; height: auto; font-family: var(--sans); }
+.chart .curve { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; }
+.js .chart .curve { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.js .chart.on .curve { stroke-dashoffset: 0; transition: stroke-dashoffset 1.8s 0.3s ease-in-out; }
+
+.recap { display: grid; gap: 0; counter-reset: r; }
+.recap li { counter-increment: r; display: grid; grid-template-columns: 2.4rem 1fr; align-items: baseline; padding: 0.42rem 0; border-top: 1px solid var(--line); font-weight: 700; line-height: 1.5; }
+.recap li::before { content: counter(r, decimal-leading-zero); font-size: 0.78rem; color: var(--accent); font-weight: 800; }
+.fin { font-size: clamp(2.6rem, 8vw, 6.5rem); font-weight: 800; line-height: 1.15; }
+
+/* ---------- 表示アニメーション ----------
+   スライドの切り替え自体は即時。中身は「動かさず、その場でフェード」させて視線が踊らないようにする。
+   ・スライドに入ったとき：全体を 1 回だけフェードイン
+   ・積み上げ表示（.step）：場所はあらかじめ確保しておき、→ を押すたびに 1 つずつフェードイン */
+.js .s .inner { opacity: 0; }
+.js .s.in .inner { opacity: 1; }
+.js .step { opacity: 0; }
+.js .step.on { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .js .s .inner { transition: opacity 0.5s ease; }
+  .js .step { transition: opacity 0.6s ease; }
+  .js .step:not(.on) { transition-duration: 0.15s; }
+}
+
+@media print {
+  .bar, .pager, .toc { display: none !important; }
+  html, body { height: auto; overflow: visible; }
+  main { display: block; height: auto; overflow: visible; }
+  .s { height: auto; overflow: visible; break-inside: avoid; padding-block: 2rem; border-bottom: 1px solid var(--line); }
+  .chapter { break-before: page; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <a class="home" href="#top">エンジニアとは</a>
+  <span class="where" id="where"></span>
+  <span class="dots" id="dots" aria-hidden="true"></span>
+  <span class="count" id="count"></span>
+  <button type="button" id="tocBtn" aria-haspopup="true">目次</button>
+  <div class="progress" id="progress"></div>
+</header>
+
+<div class="pager">
+  <button type="button" id="prev" aria-label="前へ">←</button>
+  <button type="button" id="next" aria-label="次へ">→</button>
+</div>
+
+<div class="toc" id="toc" aria-hidden="true">
+  <nav aria-label="目次">
+    <div class="toc-head"><span>目次</span><button type="button" id="tocClose" aria-label="閉じる">✕</button></div>
+    <div id="tocList"></div>
+  </nav>
+</div>
+
+<main>
+
+<!-- ============ タイトル ============ -->
+<section class="s hero" id="top" data-title="エンジニアとは">
+  <div class="inner wide">
+    <h1>エンジニア<wbr>とは</h1>
+    <p class="lede">エンジニアの本質的な仕事は「問題を解決すること」。<br>コードを書くのは、その手段の一つにすぎない。</p>
+    <p class="how"><kbd>→</kbd> <kbd>Space</kbd> で次へ　<kbd>←</kbd> で前へ　スワイプ・ホイールでも進めます<br>右上に ●○ が出るスライドは、<kbd>→</kbd> を押すたびに 1 つずつ表示されます</p>
+  </div>
+</section>
+
+<section class="s" id="map" data-title="全体の流れ">
+  <div class="inner wide">
+    <p class="kicker">全体の流れ</p>
+    <h2>11のテーマで話します</h2>
+    <div class="map">
+      <a href="#ch1"><b>01</b><strong>エンジニアの認識を覆す</strong><span>「黙々と一人でコードを書く人」ではない</span></a>
+      <a href="#ch2"><b>02</b><strong>できるエンジニア像</strong><span>姿勢と行動 / 市場価値</span></a>
+      <a href="#ch3"><b>03</b><strong>成長の姿勢</strong><span>振り返り / 質問 / 不安 / 1日1歩</span></a>
+      <a href="#ch4"><b>04</b><strong>チームの中での動き方</strong><span>アピール / 即時対応 / 他の人の動き</span></a>
+      <a href="#ch5"><b>05</b><strong>問題への向き合い方</strong><span>背景理解 / 担当範囲 / やらない判断</span></a>
+      <a href="#ch6"><b>06</b><strong>裁量と与信</strong><span>チャンスを取りに行く / 任せてもらえる人</span></a>
+      <a href="#ch7"><b>07</b><strong>技術的な習慣</strong><span>テスト・CI / 道具の使い方</span></a>
+      <a href="#ch8"><b>08</b><strong>情報のアップデート</strong><span>アップデートしない自分は、古くなる</span></a>
+      <a href="#ch9"><b>09</b><strong>要望の本質を聞き出す</strong><span>相手の言葉をそのまま受け取るな</span></a>
+      <a href="#ch10"><b>10</b><strong>マインドセット</strong><span>改善 / 失敗 / 発想力 / 文化</span></a>
+      <a href="#ch11"><b>11</b><strong>自己認識</strong><span>自分の現在を自覚する</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 ============ -->
+<section class="s chapter" id="ch1" data-ch="01 エンジニアの認識を覆す" data-title="エンジニアの認識を覆す">
+  <div class="inner">
+    <p class="no">01</p>
+    <h2>エンジニアの認識を覆す</h2>
+    <ol><li>会社に入る前のエンジニアの認識</li><li>エンジニアの仕事とは</li></ol>
+  </div>
+</section>
+
+<section class="s" id="belief" data-ch="01 エンジニアの認識を覆す" data-title="会社に入る前のエンジニアの認識">
+  <div class="inner">
+    <p class="kicker"><b>01</b>会社に入る前のエンジニアの認識</p>
+    <p class="belief">エンジニア＝<br>黙々と一人でコードを書く人</p>
+  </div>
+</section>
+
+<section class="s" id="essence" data-ch="01 エンジニアの認識を覆す" data-title="本質は「問題を解決すること」">
+  <div class="inner">
+    <p class="kicker"><b>01</b>会社に入る前のエンジニアの認識</p>
+    <p class="belief small struck">🙅 <s>エンジニア＝黙々と一人でコードを書く人</s></p>
+    <p class="essence" data-step>エンジニアの本質的な仕事は<br><em>「問題を解決すること」</em></p>
+    <p class="after" data-step>コードを書くのは、その手段の一つにすぎない</p>
+  </div>
+</section>
+
+<section class="s" id="work" data-ch="01 エンジニアの認識を覆す" data-title="エンジニアの仕事とは">
+  <div class="inner">
+    <p class="kicker"><b>01</b>エンジニアの認識を覆す</p>
+    <h2>エンジニアの仕事とは</h2>
+    <ol class="cards c2" data-steps>
+      <li>システム全体を理解し、活用方法を考える</li>
+      <li>チームと連携・コミュニケーションを大切にする</li>
+      <li>問題を見つけ、改善を繰り返す</li>
+      <li>技術やツールのトレンドを学び続ける</li>
+      <li class="hl">価値を生み出す</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section class="s chapter" id="ch2" data-ch="02 できるエンジニア像" data-title="できるエンジニア像">
+  <div class="inner">
+    <p class="no">02</p>
+    <h2>できるエンジニア像</h2>
+    <ol><li>できるエンジニアとは</li><li>できるエンジニアを想像できるか（市場価値）</li></ol>
+  </div>
+</section>
+
+<section class="s" id="able" data-ch="02 できるエンジニア像" data-title="できるエンジニアとは">
+  <div class="inner">
+    <p class="kicker"><b>02</b>できるエンジニア像</p>
+    <h2>できるエンジニアとは</h2>
+    <p class="point">スキルだけでなく<mark>「姿勢と行動」</mark>が評価される</p>
+    <ol class="cards c2">
+      <li>課題を自ら見つけ、解決に導ける</li>
+      <li>チームと協力して成果を出せる</li>
+      <li>適切なコミュニケーションで信頼を築ける</li>
+      <li>自分の担当と影響範囲を理解し、責任を持てる</li>
+    </ol>
+  </div>
+</section>
+
+<section class="s" id="value" data-ch="02 できるエンジニア像" data-title="できるエンジニアを想像できるか（市場価値）">
+  <div class="inner">
+    <p class="kicker"><b>02</b>できるエンジニア像</p>
+    <h2>できるエンジニアを想像できるか<small>市場価値</small></h2>
+    <p class="point">スキルそのものよりも、<mark>スキルで何を生んだか</mark>が市場価値を決める</p>
+    <div class="vs" data-steps>
+      <div class="ng"><span class="tag">✕ これだけでは弱い</span>「◯◯ができます」</div>
+      <div class="to">→</div>
+      <div class="ok"><span class="tag">◯ 伝えるべきこと</span>「◯◯を使って何を成し遂げたか」</div>
+    </div>
+    <ul class="pts" data-step>
+      <li>「言語やフレームワークを使えます」だけでは弱い</li>
+      <li>大事なのは、どんな課題を解決し、どんな価値を生み出したか</li>
+      <li>裁量のある仕事や主体的な貢献ができるかどうかが評価される</li>
+      <li><strong>一緒に働く姿を想像できるエンジニアが強い</strong></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 03 ============ -->
+<section class="s chapter" id="ch3" data-ch="03 成長の姿勢" data-title="成長の姿勢">
+  <div class="inner">
+    <p class="no">03</p>
+    <h2>成長の姿勢</h2>
+    <ol><li>成長とは</li><li>わからないままはダメ</li><li>その不安、本当に気にするべき？</li><li>1日1歩成長する意識を</li></ol>
+  </div>
+</section>
+
+<section class="s" id="growth" data-ch="03 成長の姿勢" data-title="成長とは">
+  <div class="inner">
+    <p class="kicker"><b>03</b>成長の姿勢</p>
+    <h2>成長とは</h2>
+    <p class="point"><mark>「受け身」ではなく、自分から学びにいく姿勢</mark>が成長を加速させる。</p>
+    <div class="cols">
+      <div class="group">
+        <h3>成長には振り返りが欠かせない</h3>
+        <ul class="pts">
+          <li>「やったことは最適だったか？ 他に良い方法は？」と考える</li>
+          <li>ときには「この進め方、逆に失敗しそう…？」と疑う視点も必要</li>
+        </ul>
+      </div>
+      <div class="group">
+        <h3>フィードバックは待つだけでは得られない</h3>
+        <ul class="pts">
+          <li>自分から聞きに行く姿勢が大事</li>
+          <li>PRにコメントがない時でも、「もっと良いやり方あるかも？」と考える習慣を持とう</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="ask" data-ch="03 成長の姿勢" data-title="わからないままはダメ">
+  <div class="inner">
+    <p class="kicker"><b>03</b>成長の姿勢</p>
+    <h2>わからないままはダメ</h2>
+    <p class="point">“わからない”は成長の出発点。<mark>黙るより、聞くほうが信頼される。</mark></p>
+    <div class="cols" data-steps>
+      <div class="group warn">
+        <h3>危険：わかったふり</h3>
+        <p>わからないことをそのままにする人（わかったふり）は<strong>「嘘をつく人」と同じくらい危険</strong>。信用を失う</p>
+      </div>
+      <div class="group tint">
+        <h3>信頼につながる：早めに質問</h3>
+        <p>「わからない」は素直に認め、早めに質問することが信頼につながる。<strong>質問はマイナス評価ではなく、プラス評価になる</strong></p>
+      </div>
+    </div>
+    <div data-step>
+      <h3>ミーティングで内容が理解できないときは</h3>
+      <ul class="three" style="margin-top:0.6rem">
+        <li>その場で質問</li><li>その場で調べる</li><li>直後に確認</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="worry" data-ch="03 成長の姿勢" data-title="その不安、本当に気にするべき？">
+  <div class="inner">
+    <p class="kicker"><b>03</b>成長の姿勢</p>
+    <h2>その不安、本当に気にするべき？</h2>
+    <p class="point"><mark>「聞いていいのかな？」と思ったら、聞いていいサイン</mark></p>
+    <div class="split">
+      <div>
+        <h3>「先生と生徒」に置き換えるとわかりやすい</h3>
+        <div class="talk" data-steps>
+          <div><span class="who">生徒</span><span class="say">聞いていいのかな？<br>迷惑じゃないかな？</span></div>
+          <div class="t"><span class="who">先生</span><span class="say">「そんなの聞いてくれればいいのに」</span></div>
+        </div>
+        <p class="sub" data-step>わからないことを放置されたり、嘘をつかれたりする方がずっと困る</p>
+      </div>
+      <ul class="pts" data-step>
+        <li>“自分には大ごと”でも、他人から見れば大したことないかもしれない</li>
+        <li>自分の視点だけで考えすぎると、行動に移せなくなることがある</li>
+        <li>実際は、「そんなに気にしなくていいのに」というケースがほとんど</li>
+        <li>一度、自分を俯瞰して見る習慣を持とう。自分の視点に囚われず、客観的に見る癖をつけよう</li>
+        <li><strong>“気にしすぎ”を疑ってみるのも、行動力の一部。</strong></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="daily" data-ch="03 成長の姿勢" data-title="1日1歩成長する意識を">
+  <div class="inner">
+    <p class="kicker"><b>03</b>成長の姿勢</p>
+    <h2>1日1歩成長する意識を</h2>
+    <p class="point">昨日より今日、今日より明日。<mark>1日1歩でも成長できれば、それは確実な前進。</mark></p>
+    <div class="split">
+      <div>
+        <div class="steps" aria-hidden="true"><div>昨日</div><div>今日</div><div>明日</div></div>
+        <p class="sub">日進月歩とかあるが、1日1歩くらいできる</p>
+      </div>
+      <ul class="pts">
+        <li>毎日、課題や不明点をきちんと認識し、その改善法や学ぶことを繰り返す</li>
+        <li>そのアプローチのやり方を自身にどんどん貯めていく</li>
+        <li>「前に似たケースがあったな」と気づけると、対応が速くなる</li>
+        <li>他の人の作業や改善も意識することで、学びの幅が広がる</li>
+      </ul>
+    </div>
+    <p class="formula" data-step><span>自分の経験</span><i>＋</i><span>他者の経験</span><i>＝</i><span class="res">加速する成長</span></p>
+  </div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section class="s chapter" id="ch4" data-ch="04 チームの中での動き方" data-title="チームの中での動き方">
+  <div class="inner">
+    <p class="no">04</p>
+    <h2>チームの中での動き方</h2>
+    <ol><li>アピールしよう（成果は見せてなんぼ）</li><li>なんでも即時対応</li><li>他の人の動きを把握する</li></ol>
+  </div>
+</section>
+
+<section class="s" id="appeal" data-ch="04 チームの中での動き方" data-title="アピールしよう（成果は見せてなんぼ）">
+  <div class="inner">
+    <p class="kicker"><b>04</b>チームの中での動き方</p>
+    <h2>アピールしよう<small>成果は見せてなんぼ</small></h2>
+    <p class="quote">「伝えなければ、<br><mark>存在しないのと同じ。</mark>」</p>
+    <p class="after" data-step>成果は見せて初めて評価される。</p>
+  </div>
+</section>
+
+<section class="s" id="appeal2" data-ch="04 チームの中での動き方" data-title="アピール＝信頼構築の手段">
+  <div class="inner">
+    <p class="kicker"><b>04</b>アピールしよう（成果は見せてなんぼ）</p>
+    <h2>アピール＝信頼構築の手段</h2>
+    <p class="point"><mark>報告は信用、可視化は武器。</mark>アピールは誠実さの表れ。</p>
+    <div class="cols" data-steps>
+      <div class="group warn">
+        <h3>アピールがないと</h3>
+        <ul class="pts">
+          <li>フルリモートでは特に見えづらく、誤解されやすい</li>
+          <li>「何してるか分からない」と思われてしまう</li>
+          <li>頑張っているのに、何もしてないという評価になるのは勿体無い</li>
+        </ul>
+      </div>
+      <div class="group tint">
+        <h3>だから、伝える</h3>
+        <ul class="pts">
+          <li>アピールは信頼構築の手段。自分を守ることにもつながる</li>
+          <li><strong>進捗が出ない時ほど、進捗や背景を伝えることが重要に</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="quick" data-ch="04 チームの中での動き方" data-title="なんでも即時対応">
+  <div class="inner">
+    <p class="kicker"><b>04</b>チームの中での動き方</p>
+    <h2>なんでも即時対応</h2>
+    <p class="point">優先度は色々あるが、<mark>小さいタスクほど速攻で片付けよう</mark></p>
+    <div class="cols" data-steps>
+      <div class="group">
+        <h3>自分のために</h3>
+        <ul class="pts">
+          <li>小さいタスクを抱えると、常に気になって集中できない</li>
+          <li>小さいタスクは小さいからすぐ片付けられる</li>
+        </ul>
+      </div>
+      <div class="group tint">
+        <h3>信頼のために</h3>
+        <ul class="pts">
+          <li>即時対応すると、頼れる存在と認識されやすい</li>
+          <li>すぐやってくれる人は貴重。簡単なのに信頼・評価・チャンスを得やすい</li>
+        </ul>
+        <div class="bubbles"><span>またこの人に頼みたい。</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="others" data-ch="04 チームの中での動き方" data-title="他の人の動きを把握する">
+  <div class="inner">
+    <p class="kicker"><b>04</b>チームの中での動き方</p>
+    <h2>他の人の動きを把握する</h2>
+    <p class="point">他者の動きに目を向けることで、視野が広がり、成長のヒントが得られる。<mark>見渡す力も身につけよう</mark></p>
+    <ul class="pts">
+      <li>他の人が何をしているかを知ることで、<strong>システム全体の理解が深まる</strong></li>
+      <li>他の人の進行状況を知っていれば、<strong>適切な人に質問・相談ができる</strong></li>
+      <li>「この前〇〇やってたよね？」という情報が、意外な場面で役に立つ</li>
+      <li>自分のタスクに直接関係なくても、関心を持つことがチーム力につながる</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section class="s chapter" id="ch5" data-ch="05 問題への向き合い方" data-title="問題への向き合い方">
+  <div class="inner">
+    <p class="no">05</p>
+    <h2>問題への向き合い方</h2>
+    <ol><li>表面的ではなく背景を理解して解決せよ</li><li>担当箇所を見極めよう</li><li>「やる」と「やらない」を判断できるように</li></ol>
+  </div>
+</section>
+
+<section class="s" id="background" data-ch="05 問題への向き合い方" data-title="表面的ではなく背景を理解して解決せよ">
+  <div class="inner">
+    <p class="kicker"><b>05</b>問題への向き合い方</p>
+    <h2>表面的ではなく<wbr>背景を理解して解決せよ</h2>
+    <p class="point">問題の原因ではなく<mark>“症状”だけを直していませんか？</mark></p>
+    <div class="vs" data-steps>
+      <div class="ng"><span class="tag">✕ 表面的</span>言われたまま修正する<br><span class="note" style="color:inherit;font-weight:600">問題の本質が解決できるとは限らない</span></div>
+      <div class="to">→</div>
+      <div class="ok"><span class="tag">◯ 背景を理解</span>なぜその issue が起きたのか？<br><span class="note" style="color:inherit;font-weight:600">目的に合った、的確な対応ができる</span></div>
+    </div>
+    <ul class="pts" data-step>
+      <li>「この解決法は本当に適切なのか？」と疑問を持つ姿勢も必要</li>
+      <li>ときには、issue 自体が的外れな可能性もあると考えよう</li>
+      <li>必要に応じて関係者と意図をすり合わせる行動も忘れずに</li>
+    </ul>
+  </div>
+</section>
+
+<section class="s" id="scope" data-ch="05 問題への向き合い方" data-title="担当箇所を見極めよう">
+  <div class="inner">
+    <p class="kicker"><b>05</b>問題への向き合い方</p>
+    <h2>担当箇所を見極めよう<small>本当に修正すべきなのはどこなのか？</small></h2>
+    <p class="point"><mark>「とりあえずこっちで直しておく」</mark>は、将来的な負債になり得る</p>
+    <ul class="pts">
+      <li>指摘された内容が、自分のプロジェクトや担当範囲に属しているとは限らない</li>
+      <li>実は、別のチーム・プロジェクト・システム側の対応が正しいケースもある</li>
+      <li>無理にこちらで修正すると、<strong>責任があいまいになったり、逆に不整合を生む</strong>ことがある</li>
+      <li>「一見こちらの問題に見えるが、本当にそうか？」という<strong>スコープの見極め</strong>が重要</li>
+      <li>必要なら、範囲の切り分けや関係者への確認を行う習慣を持とう</li>
+    </ul>
+  </div>
+</section>
+
+<section class="s" id="notdo" data-ch="05 問題への向き合い方" data-title="「やる」と「やらない」を判断できるように">
+  <div class="inner">
+    <p class="kicker"><b>05</b>問題への向き合い方</p>
+    <h2>「やる」と「やらない」を<wbr>判断できるように</h2>
+    <p class="point">“やる”より、<mark>“やらない判断”がプロの仕事</mark></p>
+    <ul class="pts">
+      <li>実はやらなくていいことは意外と多い</li>
+      <li>タスクも<strong>「本当に必要か？」「削れないか？」</strong>を考えるクセをつけよう</li>
+      <li>“やらない判断”は、プロジェクトを守る判断でもある</li>
+      <li>システムの構造や優先順位を理解しているからこそ、削る判断ができる</li>
+      <li>削る力こそ、プロジェクトを健全に保つ技術。価値のある選択を</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section class="s chapter" id="ch6" data-ch="06 裁量と与信" data-title="裁量と与信">
+  <div class="inner">
+    <p class="no">06</p>
+    <h2>裁量と与信</h2>
+    <ol><li>裁量をとりに行こう（チャンスを掴め）</li><li>与信を確保する</li></ol>
+  </div>
+</section>
+
+<section class="s" id="ownership" data-ch="06 裁量と与信" data-title="裁量をとりに行こう（チャンスを掴め）">
+  <div class="inner">
+    <p class="kicker"><b>06</b>裁量と与信</p>
+    <h2>裁量をとりに行こう<small>チャンスを掴め</small></h2>
+    <p class="point">裁量は「振られるもの」でもあるが、<mark>「取りに行くもの」</mark>でもある。<br>挑戦が、成長と裁量を引き寄せる。</p>
+    <div class="cols" data-steps>
+      <div class="group tint">
+        <h3>取りに行く</h3>
+        <ul class="pts">
+          <li>今の仕事に満足して止まっていては成長できない</li>
+          <li>やれることをどんどん広げることで、自分の市場価値も上がる</li>
+          <li>「ワクワクする」「興味ある」レベルの動機で十分。みんな最初は未経験</li>
+        </ul>
+      </div>
+      <div class="group warn">
+        <h3>ただし</h3>
+        <ul class="pts">
+          <li><strong>勝手に導入を始めるのはNG。</strong>報連相は必須</li>
+          <li>属人化はリスク。チーム全体で触れる状態を意識しよう</li>
+          <li>「この人なら大丈夫そう」という与信は必要</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="credit" data-ch="06 裁量と与信" data-title="与信を確保する">
+  <div class="inner">
+    <p class="kicker"><b>06</b>裁量と与信</p>
+    <h2>与信を確保する</h2>
+    <p class="point">与信とは、<mark>「この人なら任せても大丈夫そう」</mark>と思われる信頼感のこと</p>
+    <div>
+      <h3>どうやって得るか</h3>
+      <ol class="cards c2" data-steps style="margin-top:0.6rem">
+        <li>成果を出せる人<br><span class="note">タスク処理や速度だけでなく、価値を生む人</span></li>
+        <li>できない・わからないことを正直に伝えられる誠実な人</li>
+        <li>状況を理解して、自律的に行動できる人</li>
+        <li>困ったときに状況を共有し、相談できる人</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="credit2" data-ch="06 裁量と与信" data-title="一人で抱え込むと、チャンスが遠ざかる">
+  <div class="inner">
+    <p class="kicker"><b>06</b>与信を確保する</p>
+    <h2>一人で抱え込むと、<wbr>チャンスが遠ざかる</h2>
+    <ol class="flow" data-steps>
+      <li>一人で抱え込む</li><li>周囲は不安になる</li><li>次の依頼をためらう</li><li>「負荷をかけたくない」と思われる</li><li class="end">チャンスが遠ざかる</li>
+    </ol>
+    <p data-step>だから、困ったときは状況を共有し、相談する</p>
+    <p class="point" data-step><mark>信頼は、コードの外側で築かれる。</mark><br>安心して任せられることも強さ</p>
+  </div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section class="s chapter" id="ch7" data-ch="07 技術的な習慣" data-title="技術的な習慣">
+  <div class="inner">
+    <p class="no">07</p>
+    <h2>技術的な習慣</h2>
+    <ol><li>テストやCIは、“信頼されるコード”を書くために必要な習慣</li><li>効率のカギは、“道具の使い方”にある</li></ol>
+  </div>
+</section>
+
+<section class="s" id="test" data-ch="07 技術的な習慣" data-title="テストやCIは、“信頼されるコード”を書くために必要な習慣">
+  <div class="inner">
+    <p class="kicker"><b>07</b>技術的な習慣</p>
+    <h2>テストやCIは、“信頼されるコード”を<wbr>書くために必要な習慣</h2>
+    <div class="vs" data-steps>
+      <div class="ng"><span class="tag">✕ テストやCIの目的ではない</span>「壊れないようにする」ため</div>
+      <div class="to">→</div>
+      <div class="ok"><span class="tag">◯ テストやCIの目的</span>「壊れてもすぐに気づける」ため</div>
+    </div>
+    <ul class="pts two" data-step>
+      <li>自分も、他人も、意図せず壊すことはある。だから守る仕組みが必要</li>
+      <li>テストがあることで、<strong>安心して変更し、進化させられる</strong></li>
+      <li>「このコードはこう動くべき」という<strong>自分の意思表示</strong>でもある</li>
+      <li>AIも仕様を誤認・勝手に変える時代だからこそ、検証手段としてのテストは欠かせない</li>
+      <li>感覚がつかめないうちは、テストは多めでもいい。やりながら身につく</li>
+      <li>テストが落ちたらNG。でも仕様が変わったなら、テストを変えるのも正しい判断</li>
+    </ul>
+    <p class="point" data-step><mark>CIとテストがあってこそ、安心して挑戦できる。</mark></p>
+  </div>
+</section>
+
+<section class="s" id="tools" data-ch="07 技術的な習慣" data-title="効率のカギは、“道具の使い方”にある">
+  <div class="inner">
+    <p class="kicker"><b>07</b>技術的な習慣</p>
+    <h2>効率のカギは、<wbr>“道具の使い方”にある</h2>
+    <p class="point">知らないまま使い続けるのは、時間を捨ててるのと同じ。<mark>効率の差は、気づきの差。</mark></p>
+    <ul class="pts">
+      <li>初学者のうちは、ツールの最低限の機能で使いがち</li>
+      <li>でも実は、ちょっとした理解で何倍も効率よく使えるものが多い</li>
+      <li>気づかないまま時間をムダにしていても、自分では気づけないことがほとんど</li>
+    </ul>
+    <div class="cols" data-steps>
+      <div class="group tint"><h3>エディタ</h3><p><strong>ショートカットや拡張機能</strong>で、コーディングが数倍に</p></div>
+      <div class="group tint"><h3>ターミナル</h3><p><strong>補完・履歴検索・git情報表示</strong>で、操作がぐっと快適に</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section class="s chapter" id="ch8" data-ch="08 情報のアップデート" data-title="情報のアップデート">
+  <div class="inner">
+    <p class="no">08</p>
+    <h2>情報のアップデート</h2>
+    <ol><li>アップデートしない自分は、古くなる</li><li>情報をキャッチする方法</li></ol>
+  </div>
+</section>
+
+<section class="s" id="update" data-ch="08 情報のアップデート" data-title="アップデートしない自分は、古くなる">
+  <div class="inner">
+    <p class="kicker"><b>08</b>情報のアップデート</p>
+    <h2>アップデートしない自分は、<wbr>古くなる</h2>
+    <p class="point">現状維持＝価値が下がっていく時代。<mark>学びを止めれば、気づかぬうちに置いていかれる</mark></p>
+    <div>
+      <h3>閉じた環境では、得られる情報に限界がある</h3>
+      <ul class="pts" style="margin-top:0.7rem">
+        <li>オフィスやプロジェクトの中だけでは、技術やトレンドの変化に気づけない</li>
+        <li>情報収集は、一度やればいいものではなく、<strong>継続する習慣</strong></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="era" data-ch="08 情報のアップデート" data-title="「弥生時代の日本」と「戦国時代の中国」">
+  <div class="inner wide">
+    <p class="kicker"><b>08</b>アップデートしない自分は、古くなる</p>
+    <div class="split">
+      <div>
+        <h2 style="font-size:clamp(1.4rem,2.5vw,2.2rem)">まるで「弥生時代の日本」と「戦国時代の中国」のように</h2>
+        <p>日本が農耕を始めた頃、中国では鉄器・戦術・国家統治が進化していた</p>
+        <p class="point">同じ時間を過ごしていても、<mark>情報の差で“時代の差”がつく</mark></p>
+      </div>
+      <figure>
+        <img src="images/yayoi-sengoku.jpg" alt="左に弥生時代の日本（竪穴住居・水田・土器）、右に同じ頃の戦国時代の中国（城門・楼閣・竹簡を持つ官人・青銅器）を並べたイラスト" loading="lazy">
+        <div class="era">
+          <div><b>弥生時代の日本</b><span>農耕を始めた頃</span></div>
+          <div><b>戦国時代の中国</b><span>鉄器・戦術・国家統治</span></div>
+        </div>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="catch" data-ch="08 情報のアップデート" data-title="情報をキャッチする方法">
+  <div class="inner">
+    <p class="kicker"><b>08</b>情報のアップデート</p>
+    <h2>情報をキャッチする方法</h2>
+    <p class="point">情報の差は、行動の差。<mark>拾う人だけが先に進める。</mark></p>
+    <ul class="tbl">
+      <li><b>SNS</b><span>エンジニア界隈の動き</span></li>
+      <li><b>外部のエンジニアと話す / 登壇を聞く</b><span>リアルな現場の知見</span></li>
+      <li><b>npm trends</b><span>ライブラリの人気・流行</span></li>
+      <li><b>Googleトレンド</b><span>話題の移り変わり</span></li>
+      <li><b>GitHub</b><span>スター数、issue、更新頻度から活発度を確認</span></li>
+    </ul>
+    <div class="group tint" data-step>
+      <h3>トレンド＝すぐ使う必要はない</h3>
+      <p>業務では枯れた技術が基本。でも<strong>「選べる判断軸」は持っておくべき。</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 ============ -->
+<section class="s chapter" id="ch9" data-ch="09 要望の本質を聞き出す" data-title="要望の本質を聞き出す">
+  <div class="inner">
+    <p class="no">09</p>
+    <h2>要望の本質を聞き出す</h2>
+    <ol><li>相手の言葉をそのまま受け取るな</li><li>例：夢の庭 vs 現実</li><li>顧客が本当に必要だったもの</li></ol>
+  </div>
+</section>
+
+<section class="s" id="hear" data-ch="09 要望の本質を聞き出す" data-title="相手の言葉をそのまま受け取るな">
+  <div class="inner">
+    <p class="kicker"><b>09</b>要望の本質を聞き出す</p>
+    <h2>相手の言葉を<wbr>そのまま受け取るな</h2>
+    <p class="point">表面的な要望＝本当に必要なこと、<mark>とは限らない</mark></p>
+    <ul class="pts">
+      <li>相手の発言は、理想やイメージの断片にすぎないことが多い</li>
+      <li>希望通りに作っても、目的や前提とズレて失敗するケースは珍しくない</li>
+      <li>大切なのは、ヒアリングを通じて<strong>“本音”や“本質的なゴール”を引き出すこと</strong></li>
+    </ul>
+  </div>
+</section>
+
+<section class="s" id="garden" data-ch="09 要望の本質を聞き出す" data-title="例：夢の庭 vs 現実">
+  <div class="inner">
+    <p class="kicker"><b>09</b>相手の言葉をそのまま受け取るな</p>
+    <h2>例：夢の庭 vs 現実</h2>
+    <div class="dream" data-steps>
+      <div class="want"><span class="tag">要望（夢）</span>「草木のある素敵な庭にしたい」</div>
+      <div class="but">でも<br>実際には…</div>
+      <div class="real">
+        <span class="tag">現実</span>
+        <ul class="pts">
+          <li>虫が嫌いで窓が開けられない</li>
+          <li>雑草の手入れが追いつかず、放置されてしまう</li>
+          <li><strong>結果、理想だったはずの庭がストレスの原因に</strong></li>
+        </ul>
+      </div>
+    </div>
+    <p class="point" data-step>“夢”を叶えるつもりが、現実は“失敗”になるケースもある</p>
+  </div>
+</section>
+
+<section class="s" id="swing" data-ch="09 要望の本質を聞き出す" data-title="顧客が本当に必要だったもの">
+  <div class="inner wide">
+    <p class="kicker"><b>09</b>相手の言葉をそのまま受け取るな</p>
+    <div class="split fig-l">
+      <figure>
+        <ol class="swing" aria-label="「顧客が本当に必要だったもの」の風刺画。顧客が説明した要件から、理解・設計・コード・営業・書類・運用・請求・サポートまでがそれぞれ食い違い、本当に必要だったものは木に吊るしたタイヤのブランコだった">
+          <li class="key"><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M30 132 Q40 120 40 96 L38 58 L52 58 L52 96 Q52 120 62 132 Q46 126 30 132Z" fill="#7b4a22"/><path d="M48 66 Q78 50 104 56 L104 61 Q78 58 50 74Z" fill="#7b4a22"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/><circle cx="104" cy="44" r="12"/></g><g fill="#4fa336"><circle cx="50" cy="22" r="14"/><circle cx="82" cy="28" r="12"/><circle cx="26" cy="32" r="11"/></g><path d="M72 58 V116 M96 57 V116" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#e8cf9a" stroke="#9a7a42" stroke-width="1"><rect x="66" y="92" width="36" height="5" rx="1"/><rect x="66" y="103" width="36" height="5" rx="1"/><rect x="66" y="114" width="36" height="5" rx="1"/></g></svg><span>顧客が説明した要件</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M30 132 Q40 120 40 96 L38 58 L52 58 L52 96 Q52 120 62 132 Q46 126 30 132Z" fill="#7b4a22"/><path d="M48 66 Q78 50 104 56 L104 61 Q78 58 50 74Z" fill="#7b4a22"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/><circle cx="104" cy="44" r="12"/></g><g fill="#4fa336"><circle cx="50" cy="22" r="14"/><circle cx="82" cy="28" r="12"/><circle cx="26" cy="32" r="11"/></g><path d="M24 56 L26 104 M66 62 L64 104" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="20" y="103" width="50" height="5" rx="1" fill="#e8cf9a" stroke="#9a7a42" stroke-width="1"/></svg><span>プロジェクトリーダーの理解</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M36 132 Q44 124 44 116 L52 116 Q52 124 60 132 Q48 127 36 132Z" fill="#7b4a22"/><ellipse cx="48" cy="116" rx="5" ry="1.6" fill="#a8703a"/><path d="M39 58 L53 58 L52 84 L40 84Z" fill="#7b4a22"/><path d="M16 132 L22 50 L27 50 L22 132Z M80 132 L74 50 L79 50 L86 132Z" fill="#8a5a2c"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/></g><path d="M30 58 L32 100 M64 58 L62 100" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="27" y="99" width="40" height="5" rx="1" fill="#e8cf9a" stroke="#9a7a42" stroke-width="1"/></svg><span>アナリストの設計</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M30 132 Q40 120 40 96 L38 58 L52 58 L52 96 Q52 120 62 132 Q46 126 30 132Z" fill="#7b4a22"/><path d="M48 66 Q78 50 104 56 L104 61 Q78 58 50 74Z" fill="#7b4a22"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/><circle cx="104" cy="44" r="12"/></g><g fill="#4fa336"><circle cx="50" cy="22" r="14"/><circle cx="82" cy="28" r="12"/><circle cx="26" cy="32" r="11"/></g><path d="M38 92 Q46 96 53 92 M38 98 Q46 102 53 98 M39 104 Q46 108 53 104" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M40 106 Q30 118 24 134 M52 106 Q44 122 40 134" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="14" y="133" width="36" height="5" rx="1" fill="#e8cf9a" stroke="#9a7a42" stroke-width="1"/></svg><span>プログラマのコード</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><g fill="#ffd93b" opacity=".95"><path d="M84 96 L120 40 L120 62Z M84 96 L120 78 L120 96Z M84 96 L120 112 L120 128Z M84 96 L60 150 L78 150Z M84 96 L100 150 L116 150Z M84 96 L52 110 L52 124Z"/></g><path d="M30 132 Q40 120 40 96 L38 58 L52 58 L52 96 Q52 120 62 132 Q46 126 30 132Z" fill="#7b4a22"/><path d="M48 66 Q78 50 104 56 L104 61 Q78 58 50 74Z" fill="#7b4a22"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/><circle cx="104" cy="44" r="12"/></g><g fill="#4fa336"><circle cx="50" cy="22" r="14"/><circle cx="82" cy="28" r="12"/><circle cx="26" cy="32" r="11"/></g><path d="M74 58 V92 M98 57 V92" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#2f5fc4" stroke="#1d3f8a" stroke-width="1"><rect x="70" y="78" width="32" height="26" rx="5"/><rect x="66" y="96" width="40" height="14" rx="5"/><rect x="64" y="90" width="9" height="20" rx="4"/><rect x="99" y="90" width="9" height="20" rx="4"/></g></svg><span>営業の表現、約束</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><ellipse cx="54" cy="132" rx="30" ry="5" fill="#4f8a22" opacity=".7"/></svg><span>プロジェクトの書類</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M30 132 Q40 120 40 96 L38 58 L52 58 L52 96 Q52 120 62 132 Q46 126 30 132Z" fill="#7b4a22"/><path d="M48 66 Q78 50 104 56 L104 61 Q78 58 50 74Z" fill="#7b4a22"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/><circle cx="104" cy="44" r="12"/></g><g fill="#4fa336"><circle cx="50" cy="22" r="14"/><circle cx="82" cy="28" r="12"/><circle cx="26" cy="32" r="11"/></g><path d="M86 57 V112" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="86" cy="59" r="3" fill="#b98a4a"/><circle cx="86" cy="113" r="2.4" fill="#b98a4a"/></svg><span>実際の運用</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><g stroke="#39434d" stroke-width="1.2"><path d="M18 132 V96 M32 132 V112 M46 132 V104 M60 132 V78 M74 132 V70 M88 132 V92 M102 132 V124"/><path d="M60 78 V52 M74 70 V46"/></g><path d="M60 52 L48 56 L60 60Z M74 46 L62 50 L74 54Z" fill="#1e2f8f"/><path d="M6 110 Q18 88 32 110 T60 78 Q74 62 86 88 T110 132" fill="none" stroke="#b5651d" stroke-width="5" stroke-linecap="round"/><path d="M6 110 Q18 88 32 110 T60 78 Q74 62 86 88 T110 132" fill="none" stroke="#f1dfb5" stroke-width="2" stroke-dasharray="3 3"/><rect x="62" y="66" width="12" height="7" rx="3" fill="#d6332a"/></svg><span>顧客への請求金額</span></li>
+          <li><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M40 134 Q50 124 50 108 L70 108 Q70 124 80 134 Q60 128 40 134Z" fill="#7b4a22"/><ellipse cx="60" cy="108" rx="10" ry="3" fill="#c79a5e" stroke="#7b4a22"/></svg><span>得られたサポート</span></li>
+          <li class="key"><svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#a9d3f7"/><g fill="#fff"><ellipse cx="88" cy="74" rx="20" ry="7"/><ellipse cx="100" cy="68" rx="13" ry="7"/><ellipse cx="22" cy="92" rx="16" ry="5"/></g><rect y="118" width="120" height="32" fill="#6fae35"/><ellipse cx="60" cy="118" rx="80" ry="7" fill="#6fae35"/><path d="M30 132 Q40 120 40 96 L38 58 L52 58 L52 96 Q52 120 62 132 Q46 126 30 132Z" fill="#7b4a22"/><path d="M48 66 Q78 50 104 56 L104 61 Q78 58 50 74Z" fill="#7b4a22"/><g fill="#3f8f2b"><circle cx="28" cy="38" r="22"/><circle cx="56" cy="26" r="24"/><circle cx="86" cy="34" r="22"/><circle cx="44" cy="46" r="16"/><circle cx="104" cy="44" r="12"/></g><g fill="#4fa336"><circle cx="50" cy="22" r="14"/><circle cx="82" cy="28" r="12"/><circle cx="26" cy="32" r="11"/></g><path d="M88 57 V92" stroke="#b98a4a" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="88" cy="106" rx="11" ry="15" fill="none" stroke="#23282d" stroke-width="7"/></svg><span>顧客が本当に必要だったもの</span></li>
+        </ol>
+        <figcaption>有名な風刺画「顧客が本当に必要だったもの」をもとに描き直した図。<b>説明された要件</b>と、<b>本当に必要だったもの</b>は違う。</figcaption>
+      </figure>
+      <div data-step>
+        <h2 style="font-size:clamp(1.4rem,2.5vw,2.2rem)">「本当に必要なものは何か？」を一緒に考える</h2>
+        <ul class="pts">
+          <li>ときには「それはやめた方がいいかもしれません」と<strong>提案を返す勇気</strong>も必要</li>
+          <li>ただし、否定するだけでなく、なぜそう考えるかの背景を丁寧に伝える</li>
+        </ul>
+        <p class="point"><mark>正しく聞いて、正しく疑う。</mark>それが本当の信頼につながる。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="s chapter" id="ch10" data-ch="10 マインドセット" data-title="マインドセット">
+  <div class="inner">
+    <p class="no">10</p>
+    <h2>マインドセット</h2>
+    <ol><li>常に課題を感じ、改善する意識を</li><li>ミスっても死なない。やり直しは成長の証</li><li>発想力と想像力を鍛える</li><li>文化は作る物。変える物</li></ol>
+  </div>
+</section>
+
+<section class="s" id="improve" data-ch="10 マインドセット" data-title="常に課題を感じ、改善する意識を">
+  <div class="inner">
+    <p class="kicker"><b>10</b>マインドセット</p>
+    <h2>常に課題を感じ、<wbr>改善する意識を</h2>
+    <p class="point">タスクをこなすだけでは、成長も価値も生まれない。<br><mark>課題に気づける人だけが、価値を積み上げられる。</mark></p>
+    <div class="cols" data-steps>
+      <div class="group">
+        <h3>その“違和感”を放置しない</h3>
+        <div class="bubbles"><span>なんか使いづらい</span><span>このコード、読みにくい</span></div>
+        <ul class="pts">
+          <li>自分や他人が使っていてつらいと感じる部分は、<strong>すでに課題のサイン</strong></li>
+          <li>「過去の歴史があるから…」「誰かが作ったから仕方ない」→ そんな遠慮はいらない</li>
+        </ul>
+      </div>
+      <div class="group tint">
+        <h3>改善のタイミングも“戦略的”に</h3>
+        <ul class="pts">
+          <li>改善が早すぎると、逆に効率を下げるリスクもある</li>
+          <li>ベストな改善方法が見えるまで、一時的に“負債”を許容する判断もアリ</li>
+          <li>重要なのは、<strong>「現状を正しく認識した上で、いつどこから手をつけるか」</strong>を考えること</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="fail" data-ch="10 マインドセット" data-title="ミスっても死なない。やり直しは成長の証">
+  <div class="inner">
+    <p class="kicker"><b>10</b>マインドセット</p>
+    <h2>ミスっても死なない。<wbr>やり直しは成長の証</h2>
+    <div class="vs" data-steps>
+      <div class="ng"><span class="tag">重要じゃない</span>「失敗しない」</div>
+      <div class="to">→</div>
+      <div class="ok"><span class="tag">ずっと大事</span>「失敗から立て直せる」</div>
+    </div>
+    <div class="cols" style="gap:0.6rem 2.2rem" data-step>
+      <ul class="pts">
+        <li>かならず“正解”を選べなくてもいい。最初から完璧な選択なんて、ほとんどできない</li>
+        <li>やってみないと分からないことのほうが圧倒的に多い</li>
+        <li>実行して、失敗したと感じたら、また挑戦するだけ</li>
+        <li>失敗したら、「なぜうまくいかなかったか」がわかる。失敗から得られる経験は大きい</li>
+      </ul>
+      <ul class="pts">
+        <li><strong>気づきと改善があるなら、それはすでに前進</strong></li>
+        <li>失敗を恐れて止まるほうが、成長の機会を逃している</li>
+        <li>チームやシステムは、試行錯誤が前提で作られている</li>
+        <li><strong>だからこそ、まずは動いてみることが求められる</strong></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="imagine" data-ch="10 マインドセット" data-title="発想力と想像力を鍛える">
+  <div class="inner">
+    <p class="kicker"><b>10</b>マインドセット</p>
+    <h2>発想力と想像力を鍛える</h2>
+    <p class="point">発想力・想像力は、エンジニアにとって重要な武器。<mark>考えるクセが、引き出しを増やす。</mark></p>
+    <div class="cols" data-steps>
+      <div class="group">
+        <h3>なぜ武器になるのか</h3>
+        <ul class="pts">
+          <li>タスクを受けたときに「どんな改修が必要か」「どこに影響が出るか」を考えられる力</li>
+          <li>解決の方法は一つではない。最適な手段を選べるかどうかが問われる</li>
+        </ul>
+      </div>
+      <div class="group">
+        <h3>経験と好奇心で鍛えられる</h3>
+        <ul class="pts">
+          <li>普段使っているサービスや仕組みに「どう作ってるのか？」と興味を持つだけでも十分</li>
+          <li>日常のモノやアプリを「自分ならどう設計するか」と考えるクセをつける</li>
+        </ul>
+      </div>
+      <div class="group">
+        <h3>知識も発想の材料になる</h3>
+        <ul class="pts">
+          <li>書籍・ブログ・他人のコードを通じて、引き出しを増やしておこう</li>
+          <li>実際に使わなくても「こういうやり方もある」と知っているだけで強みになる</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="culture" data-ch="10 マインドセット" data-title="文化は作る物。変える物">
+  <div class="inner">
+    <p class="kicker"><b>10</b>マインドセット</p>
+    <h2>文化は作る物。変える物</h2>
+    <p class="point">組織の文化は「与えられるもの」ではなく、<mark>「自分たちでつくるもの」</mark></p>
+    <ul class="pts">
+      <li>技術的な成果だけでなく、働き方や関わり方も文化を形づくる</li>
+      <li>一人の行動・言葉・姿勢が、文化を変えるきっかけになる</li>
+    </ul>
+    <div class="cols" data-steps>
+      <div class="group">
+        <h3>現状を鵜呑みにしないことが大切</h3>
+        <ul class="pts">
+          <li>「なんとなく続いていること」こそ、見直す価値がある</li>
+          <li>不要な習慣や空気に気づけることが、最初の一歩</li>
+        </ul>
+      </div>
+      <div class="group tint">
+        <h3>より良い文化は、より良いチーム・環境を生み出す</h3>
+        <ul class="pts">
+          <li>声を上げることが組織の改善につながる</li>
+          <li>誰かの勇気が、全体を動かすこともある</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="s chapter" id="ch11" data-ch="11 自己認識" data-title="自己認識">
+  <div class="inner">
+    <p class="no">11</p>
+    <h2>自己認識</h2>
+    <ol><li>自分の現在を自覚する</li></ol>
+  </div>
+</section>
+
+<section class="s" id="self" data-ch="11 自己認識" data-title="自分の現在を自覚する">
+  <div class="inner wide">
+    <p class="kicker"><b>11</b>自己認識</p>
+    <h2>自分の現在を自覚する</h2>
+    <div class="split fig-r">
+      <div class="prose">
+        <p>自分のエンジニアとしての現在地を把握しよう。<br>今できること、これからできるようにすべきことを見つめよう</p>
+        <p class="dim" data-step="1">能力が低い人ほど、自分を高く見積もりがちだ。<br>経験が浅ければ、自分のレベルすら正しく測れない</p>
+        <p class="point" data-step="2">だからこそ、<mark>“自分を疑う視点”を持つ者が、成長を加速させる</mark></p>
+      </div>
+      <figure class="chart" data-step="1">
+        <svg viewBox="0 0 800 440" role="img" aria-label="ダニング＝クルーガー効果の曲線。横軸は知識・能力（無知から専門家）、縦軸は自信。知識が少ない段階で自信が急上昇する「馬鹿の山」、急落する「絶望の谷」、知識とともに緩やかに回復する「啓蒙の坂」、高い水準で安定する「継続の台地」の順に進む">
+          <g stroke="#9aa7b4" stroke-width="2" fill="none">
+            <path d="M80 30 V380 H770"/>
+            <path d="M74 40 L80 28 L86 40 M760 374 L772 380 L760 386"/>
+          </g>
+          <g fill="#55626f" font-size="20">
+            <text x="52" y="60" text-anchor="middle">高い</text>
+            <text x="52" y="368" text-anchor="middle">低い</text>
+            <text x="100" y="412">無知</text>
+            <text x="760" y="412" text-anchor="end">専門家</text>
+          </g>
+          <g fill="#15202b" font-size="22" font-weight="700">
+            <text x="52" y="215" text-anchor="middle">自信</text>
+            <text x="430" y="414" text-anchor="middle">知識・能力</text>
+          </g>
+          <path class="curve" pathLength="1" d="M98 350 C118 230 134 96 158 96 C188 96 188 318 240 318 C310 318 400 132 560 122 C630 118 690 118 750 118"/>
+          <g fill="#0a6491" font-size="23" font-weight="700">
+            <text x="182" y="80">①「馬鹿の山」</text>
+            <text x="262" y="352">②「絶望の谷」</text>
+            <text x="418" y="258">③「啓蒙の坂」</text>
+            <text x="745" y="96" text-anchor="end">④「継続の台地」</text>
+          </g>
+          <g fill="#0a6491">
+            <circle cx="158" cy="96" r="6"/><circle cx="240" cy="318" r="6"/><circle cx="395" cy="210" r="6"/><circle cx="660" cy="118" r="6"/>
+          </g>
+        </svg>
+        <figcaption>ダニング＝クルーガー効果の曲線（元スライドの図をもとに再作図。参考：<a href="https://biz.moneyforward.com/payroll/basic/63123/">マネーフォワード クラウド給与</a>）</figcaption>
+      </figure>
+    </div>
+    <p class="after" style="color:var(--ink)" data-step="3">視野を広げ、知識を深め、自分を見つめて、成長のその先へ進もう</p>
+  </div>
+</section>
+
+<!-- ============ まとめ ============ -->
+<section class="s" id="recap" data-title="ふりかえり">
+  <div class="inner">
+    <p class="kicker">ふりかえり</p>
+    <h2>11のテーマを、一言ずつ</h2>
+    <ol class="recap">
+      <li>エンジニアの本質的な仕事は「問題を解決すること」</li>
+      <li>スキルそのものよりも、スキルで何を生んだか</li>
+      <li>「受け身」ではなく、自分から学びにいく</li>
+      <li>伝えなければ、存在しないのと同じ</li>
+      <li>“やる”より、“やらない判断”がプロの仕事</li>
+      <li>信頼は、コードの外側で築かれる</li>
+      <li>CIとテストがあってこそ、安心して挑戦できる</li>
+      <li>情報の差は、行動の差。拾う人だけが先に進める</li>
+      <li>正しく聞いて、正しく疑う</li>
+      <li>文化は、誰かじゃなく“自分たち”が作る</li>
+      <li>“自分を疑う視点”を持つ者が、成長を加速させる</li>
+    </ol>
+  </div>
+</section>
+
+<section class="s hero" id="end" data-title="おしまい">
+  <div class="inner wide">
+    <p class="fin">おしまい</p>
+    <p class="lede">エンジニアの本質的な仕事は「問題を解決すること」。</p>
+    <p class="how"><a href="#top">最初に戻る</a>　／　元スライド：<a href="https://speakerdeck.com/eretica/ensiniatoha">Speaker Deck</a></p>
+  </div>
+</section>
+
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const flat = new URLSearchParams(location.search).has('flat'); // ?flat = アニメーションなし（印刷・確認用）
+  if (flat) root.classList.add('flat'); else root.classList.add('js');
+
+  const secs = [...document.querySelectorAll('.s')];
+  const where = document.getElementById('where');
+  const count = document.getElementById('count');
+  const progress = document.getElementById('progress');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const behavior = reduced || flat ? 'auto' : 'smooth';
+
+  const deck = document.querySelector('main');
+
+  // 表示アニメーション
+  if ('IntersectionObserver' in window && !flat) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }), { root: deck, threshold: 0.4 });
+    secs.forEach(s => io.observe(s));
+  } else {
+    secs.forEach(s => s.classList.add('in'));
+  }
+
+  // 積み上げ表示：data-step / data-steps からステップの並びを作る
+  const dots = document.getElementById('dots');
+  secs.forEach(sec => {
+    const groups = [];
+    let n = 0;
+    sec.querySelectorAll('[data-step], [data-steps] > *').forEach(el => {
+      const k = el.dataset.step ? +el.dataset.step - 1 : n;
+      if (!el.dataset.step && !el.matches('.to, .but')) n++; // 矢印などのつなぎは、次の要素と同時に出す
+      el.classList.add('step', 'on');
+      (groups[k] ||= []).push(el);
+    });
+    sec._steps = groups.filter(Boolean);
+    sec._shown = sec._steps.length;
+  });
+  const setSteps = (sec, count) => {
+    sec._shown = Math.max(0, Math.min(sec._steps.length, count));
+    sec._steps.forEach((g, k) => g.forEach(el => el.classList.toggle('on', k < sec._shown)));
+    if (sec === secs[cur()]) showDots(sec);
+  };
+  const showDots = sec => { dots.textContent = '●'.repeat(sec._shown) + '○'.repeat(sec._steps.length - sec._shown); };
+
+  // 現在位置
+  const cur = () => Math.max(0, Math.min(secs.length - 1, Math.round(deck.scrollLeft / deck.clientWidth)));
+  let last = -1;
+  const sync = () => {
+    const max = deck.scrollWidth - deck.clientWidth;
+    progress.style.width = (max > 0 ? Math.min(1, deck.scrollLeft / max) * 100 : 0) + '%';
+    const i = cur();
+    if (i === last) return;
+    last = i;
+    const s = secs[i];
+    if (!viaGo) setSteps(s, Infinity); // スワイプや目次で来たときは全部見せる
+    showDots(s);
+    where.textContent = s.dataset.ch ? s.dataset.ch : '';
+    count.textContent = (i + 1) + ' / ' + secs.length;
+    tocLinks.forEach((a, k) => a.classList.toggle('now', k === i));
+  };
+
+  // 移動：スライド送りはアニメーションなしで即座に切り替える
+  const target = null;
+  let viaGo = false;
+  const go = (i, dir = 0) => {
+    const t = Math.max(0, Math.min(secs.length - 1, i));
+    if (t !== cur()) setSteps(secs[t], dir > 0 ? 0 : Infinity); // 進んで入ったら最初から積み上げ、戻って入ったら全部表示
+    viaGo = true;
+    deck.scrollTo({ left: secs[t].offsetLeft, behavior: 'instant' });
+    sync();
+    viaGo = false;
+  };
+  const here = cur;
+  // 画面に収まらないスライドは、まず中を縦にスクロールしてから次へ
+  const room = (el, dir) => getComputedStyle(el).overflowY !== 'auto' ? false
+    : dir > 0 ? el.scrollHeight - el.clientHeight - el.scrollTop > 8 : el.scrollTop > 8;
+  const next = () => {
+    const i = here(), el = secs[i];
+    if (el._shown < el._steps.length) {
+      setSteps(el, el._shown + 1);
+      el._steps[el._shown - 1][0].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+    else if (room(el, 1)) el.scrollBy({ top: el.clientHeight * 0.8, behavior });
+    else go(i + 1, 1);
+  };
+  const prev = () => {
+    const i = here(), el = secs[i];
+    if (el._shown > 0) setSteps(el, el._shown - 1);
+    else if (room(el, -1)) el.scrollBy({ top: -el.clientHeight * 0.8, behavior });
+    else go(i - 1, -1);
+  };
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  // マウスホイール（縦）でもスライドを送る。1 回の操作で 1 枚だけ進める
+  let wheelBusy = false, wheelIdle;
+  deck.addEventListener('wheel', e => {
+    if (e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return; // 横スワイプはブラウザに任せる
+    const dir = e.deltaY > 0 ? 1 : -1;
+    if (room(secs[cur()], dir)) return;                                  // スライド内の縦スクロールを優先
+    e.preventDefault();
+    clearTimeout(wheelIdle);
+    wheelIdle = setTimeout(() => { wheelBusy = false; }, 180);
+    if (wheelBusy || Math.abs(e.deltaY) < 4) return;
+    wheelBusy = true;
+    dir > 0 ? next() : prev();
+  }, { passive: false });
+
+  // 目次
+  const toc = document.getElementById('toc');
+  const tocList = document.getElementById('tocList');
+  const tocLinks = secs.map(s => {
+    const a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = s.classList.contains('chapter') ? s.dataset.ch : s.dataset.title;
+    a.className = s.classList.contains('chapter') || !s.dataset.ch ? 'ch' : 'tp';
+    tocList.appendChild(a);
+    return a;
+  });
+  const setToc = open => { toc.classList.toggle('open', open); toc.setAttribute('aria-hidden', String(!open)); };
+  document.getElementById('tocBtn').addEventListener('click', () => setToc(true));
+  document.getElementById('tocClose').addEventListener('click', () => setToc(false));
+  toc.addEventListener('click', e => { if (e.target === toc || e.target.closest('a')) setToc(false); });
+
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Escape') return setToc(false);
+    if (e.key === ' ' && e.target.closest?.('button, a, input, textarea')) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': case ' ':
+        e.preventDefault(); e.shiftKey && e.key === ' ' ? prev() : next(); break;
+      case 'ArrowLeft': case 'PageUp':
+        e.preventDefault(); prev(); break;
+      case 'ArrowDown': case 'ArrowUp': {
+        const el = secs[cur()], dir = e.key === 'ArrowDown' ? 1 : -1;
+        if (room(el, dir)) { e.preventDefault(); el.scrollBy({ top: dir * 80 }); }
+        break;
+      }
+      case 'Home': e.preventDefault(); go(0); break;
+      case 'End': e.preventDefault(); go(secs.length - 1); break;
+      case 'm': setToc(!toc.classList.contains('open')); break;
+    }
+  });
+
+  deck.addEventListener('scroll', sync, { passive: true });
+  addEventListener('resize', () => { deck.scrollTo({ left: secs[last < 0 ? 0 : last].offsetLeft }); sync(); });
+  sync();
+})();
+</script>
+</body>
+</html>
